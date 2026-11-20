@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>海风城市冲刺 · 1000m 伪 3D 小猫跑酷</title>
+  <meta name="description" content="操纵小猫从海边公路出发，穿过落日城市高架与夜间灯牌街区，躲避障碍、收集金币，冲过 1000m 终点！" />
+  <meta property="og:title" content="海风城市冲刺 · 1000m 小猫跑酷" />
+  <meta property="og:description" content="海边公路 → 城市高架 → 夜间灯牌街区，一起帮小猫冲刺 1000m 终点！" />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='85'>🐱</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="game-shell">
+    <canvas id="game-canvas" aria-label="海风城市冲刺游戏画面"></canvas>
+
+    <!-- Top HUD -->
+    <header id="hud" class="hud hidden" aria-live="polite">
+      <div class="hud-left">
+        <div id="stage-badge" class="pill stage-badge">
+          <span id="stage-icon">🌊</span>
+          <span id="stage-name">海边公路</span>
+        </div>
+        <div id="hearts-box" class="pill hearts-box" aria-label="生命值">
+          <span class="heart">❤️</span>
+          <span class="heart">❤️</span>
+          <span class="heart">❤️</span>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <div class="progress-wrap">
+          <div class="progress-bar-track">
+            <div class="seg seg-1"></div>
+            <div class="seg seg-2"></div>
+            <div class="seg seg-3"></div>
+            <div id="progress-fill" class="progress-fill"></div>
+            <div id="progress-cat" class="progress-cat" aria-hidden="true">🐱</div>
+          </div>
+          <div class="progress-meta">
+            <span id="dist-text" class="tabular">0 m</span>
+            <span class="dist-goal">/ 1000 m</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <div class="pill coin-pill">
+          <span class="coin-dot"></span>
+          <span id="coin-text" class="tabular">0</span>
+        </div>
+        <button id="btn-sound" class="icon-btn" title="开关音效" aria-label="开关音效">🔊</button>
+        <button id="btn-pause" class="icon-btn" title="暂停游戏" aria-label="暂停游戏">⏸</button>
+      </div>
+    </header>
+
+    <!-- Combo / Stage Banner Toast -->
+    <div id="stage-banner" class="stage-banner hidden" aria-hidden="true">
+      <div id="banner-sub" class="banner-sub">STAGE 1</div>
+      <div id="banner-title" class="banner-title">海边公路</div>
+      <div id="banner-desc" class="banner-desc">迎着海风出发，冲向 1000m 终点！</div>
+    </div>
+
+    <!-- Start Screen Overlay -->
+    <section id="overlay-start" class="overlay">
+      <div class="card start-card">
+        <div class="brand-tag">1000M PSEUDO-3D CAT RUNNER</div>
+        <h1 class="game-title">海风城市冲刺</h1>
+        <p class="game-subtitle">
+          从阳光海边公路出发，跨越落日城市高架，穿越霓虹灯牌街区，带小猫全力冲过 1000m 终点！
+        </p>
+
+        <div class="route-preview">
+          <div class="route-step">
+            <span class="route-emoji">🌊</span>
+            <span class="route-label">海边公路</span>
+            <span class="route-range">0–330m</span>
+          </div>
+          <span class="route-arrow">→</span>
+          <div class="route-step">
+            <span class="route-emoji">🌇</span>
+            <span class="route-label">城市高架</span>
+            <span class="route-range">330–660m</span>
+          </div>
+          <span class="route-arrow">→</span>
+          <div class="route-step">
+            <span class="route-emoji">🏮</span>
+            <span class="route-label">灯牌街区</span>
+            <span class="route-range">660–1000m</span>
+          </div>
+        </div>
+
+        <div class="controls-guide">
+          <div class="ctrl-item"><kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> 或左右滑动：换道</div>
+          <div class="ctrl-item"><kbd>↑</kbd> / <kbd>W</kbd> / <kbd>Space</kbd> 或上滑：跳跃</div>
+        </div>
+
+        <button id="btn-start" class="primary-btn">
+          <span>🐱 开始冲刺</span>
+        </button>
+
+        <div id="start-best" class="best-line hidden"></div>
+      </div>
+    </section>
+
+    <!-- Pause Overlay -->
+    <section id="overlay-pause" class="overlay hidden">
+      <div class="card compact-card">
+        <h2>游戏已暂停</h2>
+        <p class="muted">海风稍作停歇，小猫随时准备继续奔跑。</p>
+        <div class="btn-row">
+          <button id="btn-resume" class="primary-btn">继续冲刺</button>
+          <button id="btn-pause-restart" class="secondary-btn">重新开始</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Finish / Settlement Overlay -->
+    <section id="overlay-result" class="overlay hidden">
+      <div class="card result-card">
+        <div class="result-header">
+          <div id="result-badge" class="result-badge">🎉 冲线成功</div>
+          <div id="result-rank" class="rank-stamp">S</div>
+        </div>
+        <h2 id="result-title">小猫冲过 1000m 终点！</h2>
+        <p id="result-sub" class="muted">乘着海风与霓虹，完成了全程城市大冒险！</p>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">冲刺距离</div>
+            <div id="stat-dist" class="stat-val tabular">1000 m</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">收集金币</div>
+            <div id="stat-coins" class="stat-val tabular">0 枚</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">用时</div>
+            <div id="stat-time" class="stat-val tabular">0.0 s</div>
+          </div>
+          <div class="stat-box highlight">
+            <div class="stat-label">综合得分</div>
+            <div id="stat-score" class="stat-val tabular">0</div>
+          </div>
+        </div>
+
+        <div id="result-best-note" class="best-line"></div>
+
+        <div class="btn-row">
+          <button id="btn-replay" class="primary-btn">再跑一次</button>
+          <button id="btn-share" class="secondary-btn">📤 分享成绩</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mobile / Touch On-Screen Controls -->
+    <div id="touch-controls" class="touch-controls hidden" aria-label="触控按钮">
+      <div class="touch-left-group">
+        <button id="touch-left" class="touch-btn" aria-label="向左换道">◀</button>
+        <button id="touch-right" class="touch-btn" aria-label="向右换道">▶</button>
+      </div>
+      <button id="touch-jump" class="touch-btn touch-jump" aria-label="跳跃">⬆ 跳</button>
+    </div>
+
+    <!-- Floating Share Toast -->
+    <div id="toast" class="toast hidden" role="status"></div>
+  </div>
+
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
